@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/rsa"
 	"log"
 	"net/http"
 	"os"
@@ -13,17 +12,18 @@ import (
 )
 
 var errorLogger = log.New(os.Stderr, "ERROR ", log.Llongfile)
-var signKey *rsa.PrivateKey
+var hmacSampleSecret = []byte("secret")
 
 func GenerateJwt(request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	log.Println("Generating new jwt")
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
-		Issuer:    "go-auth",
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp":    time.Now().Add(time.Hour * 24).Unix(),
+		"iat":    time.Now().Unix(),
+		"signer": "go-auth",
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
-	tokenString, err := token.SignedString(signKey)
+	tokenString, err := token.SignedString(hmacSampleSecret)
 
 	if err != nil {
 		log.Printf("Error creating jwt: %v", err)
